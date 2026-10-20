@@ -1,6 +1,6 @@
 /* Boardu service worker: keeps the app usable offline after the first visit.
    Bump VERSION whenever index.html changes so visitors get the new build. */
-const VERSION = 'boardu-v0.5.0';
+const VERSION = 'boardu-v0.5.1';
 const FONT_CACHE = 'boardu-fonts';
 const CORS_CACHE = 'boardu-fonts-cors';
 const TEXTURE_CACHE = 'boardu-textures'; // board textures the page paints itself

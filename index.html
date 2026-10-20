@@ -1709,6 +1709,37 @@ dialog[open] { animation: dlg-in .22s var(--ease-out); }
 .board-theme-dot { flex: none; width: 11px; height: 11px; border-radius: 50%; background: var(--ground); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .25), 0 0 0 1.5px var(--pin-1); }
 #themeOwnLabel small { display: block; font-size: 12px; color: var(--chrome-muted); }
 
+/* ---------- Binning: the drop bin, and cards flying to the trash ---------- */
+.bin-drop {
+  position: absolute; z-index: 16; left: 50%; bottom: 22px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 18px 8px 10px;
+  background: var(--pop-bg); color: var(--chrome-ink);
+  border: 1px solid var(--chrome-line); border-radius: 999px;
+  box-shadow: var(--shadow-pop);
+  font-size: 14px; font-weight: 600; white-space: nowrap;
+  translate: -50% 28px; opacity: 0; pointer-events: none;
+  transition: translate .3s var(--ease-spring), opacity .2s, scale .2s var(--ease-spring), background-color .15s, color .15s;
+}
+.viewport.is-dragging-card ~ .bin-drop, .bin-drop.is-gulp { translate: -50% 0; opacity: 1; }
+.bin-can { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); transition: background-color .15s, color .15s; }
+.bin-can svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
+.bin-lid { transform-origin: 9px 13px; transition: transform .25s var(--ease-spring); }
+.bin-drop.is-over { scale: 1.08; background: var(--danger); border-color: transparent; color: #fff; }
+.bin-drop.is-over .bin-can { background: rgb(255 255 255 / .18); color: #fff; }
+.bin-drop.is-over .bin-lid { transform: translate(3px, -5px) rotate(-26deg); }
+.bin-drop.is-gulp { animation: bin-gulp .6s var(--ease-out); }
+.bin-drop.is-gulp .bin-lid { animation: lid-shut .6s var(--ease-spring); }
+@keyframes bin-gulp { 0% { scale: 1.08; } 35% { scale: .9; } 60% { scale: 1.06; } 100% { scale: 1; } }
+@keyframes lid-shut { 0% { transform: translate(3px, -5px) rotate(-26deg); } 40% { transform: none; } 55% { transform: translateY(-2px); } 100% { transform: none; } }
+.card.is-dragging.is-binning .card-paper { scale: .72; opacity: .8; }
+.fly-layer { position: fixed; inset: 0; z-index: 40; overflow: hidden; pointer-events: none; }
+.fly-layer .card { pointer-events: none; }
+.icon-btn.is-gulp { animation: btn-gulp .55s var(--ease-spring); }
+@keyframes btn-gulp { 40% { scale: 1.28; background: var(--chrome-active); } }
+@media (max-width: 640px) { .bin-label { display: none; } .bin-drop { padding: 8px; } }
+@media (prefers-reduced-motion: reduce) { .bin-drop, .bin-lid { transition: opacity .15s; } .bin-drop.is-gulp, .bin-drop.is-gulp .bin-lid, .icon-btn.is-gulp { animation: none; } }
+
 /* ---------- Selection, lasso, arranging ---------- */
 .lasso {
   position: absolute; left: 0; top: 0; z-index: 2147483000;
@@ -2421,6 +2452,10 @@ textarea.inline-input { resize: none; line-height: 1.4; }
       <div class="board" id="board"></div>
     </main>
     <div class="ambient" aria-hidden="true"></div>
+    <div class="bin-drop" id="binDrop" aria-hidden="true">
+      <span class="bin-can"><svg viewBox="0 0 48 48"><g class="bin-lid"><path d="M7 13h34"/><path d="M19 13V9.5A2.5 2.5 0 0 1 21.5 7h5A2.5 2.5 0 0 1 29 9.5V13"/></g><path d="M11 13l2.2 26.4A3 3 0 0 0 16.2 42h15.6a3 3 0 0 0 3-2.6L37 13"/><path d="M20 20v15M28 20v15"/></svg></span>
+      <span class="bin-label">Drop here to move it to the trash</span>
+    </div>
     <p class="sr-only" id="boardHelp">Press N for a new note, A to add a card, slash to search and question mark for all shortcuts. Tab moves between notes. Arrow keys move the selected note and Enter edits it.</p>
 
     <div class="empty-state" id="emptyState" hidden>
@@ -2754,7 +2789,7 @@ textarea.inline-input { resize: none; line-height: 1.4; }
         <ul>
           <li>Several boards, search across all of them, and jump straight to a match.</li>
           <li>Select many cards with a lasso or Shift-click, then move, recolour, archive or delete them together.</li>
-          <li>Snap to grid, Tidy up, undo and redo, an archive, and a trash that keeps cards for 30 days.</li>
+          <li>Snap to grid, Tidy up, undo and redo, an archive, and a trash that keeps cards for 30 days. Drop a card on the bin, or flick it off the screen and confirm.</li>
           <li>Give any board its own theme, and the others keep theirs.</li>
         </ul>
         <h3>Your data, your files</h3>
@@ -2767,6 +2802,14 @@ textarea.inline-input { resize: none; line-height: 1.4; }
       </section>
 
       <section data-page-panel="changelog" role="tabpanel" aria-label="Changelog" hidden>
+        <article class="change">
+          <h3>0.5.1 <small>20 October 2026</small></h3>
+          <ul>
+            <li>Drag a card onto the bin that appears at the bottom of the board to move it to the trash. The lid opens as you get close.</li>
+            <li>Throw a card off the screen with a quick flick and Boardu asks before binning it. Keep it, and it flies back to where it was.</li>
+            <li>Cards you archive or delete now fly into the Archive and trash button, so you can see where they went.</li>
+          </ul>
+        </article>
         <article class="change">
           <h3>0.5.0 <small>20 October 2026</small></h3>
           <ul>
@@ -2936,7 +2979,7 @@ function highlightIn(root, q) {
 /* -------------------------------------------------------------------
    2. Constants
    ------------------------------------------------------------------- */
-const APP_VERSION = '0.5.0';
+const APP_VERSION = '0.5.1';
 const STORAGE_KEY = 'boardu.v1';
 const THEME_KEY = 'boardu.theme';
 /* Saves gained an optional `deleted` field in 0.4.1 without a bump: an older
@@ -3937,7 +3980,7 @@ function onPointerDown(e) {
     mode: 'move', id, pointerId: e.pointerId, moved: false, group, additive,
     sx: e.clientX, sy: e.clientY, cx: e.clientX, cy: e.clientY,
     ox: card.x, oy: card.y, sl: vp.scrollLeft, st: vp.scrollTop,
-    lx: e.clientX, lt: performance.now(), vx: 0, tx: null,
+    lx: e.clientX, ly: e.clientY, lt: performance.now(), vx: 0, vy: 0, tx: null,
   };
   if (e.pointerType === 'touch') LongPress.start(e, id);
 }
@@ -3985,14 +4028,16 @@ function onPointerMove(e) {
       document.body.style.cursor = 'grabbing';
       Physics.wake();
     }
-    const t = performance.now();
-    const inst = ((e.clientX - d.lx) / Math.max(1, t - d.lt)) * 1000;
-    d.vx = d.vx * 0.65 + inst * 0.35;
+    const t = performance.now(), dt = Math.max(1, t - d.lt);
+    d.vx = d.vx * 0.65 + (((e.clientX - d.lx) / dt) * 1000) * 0.35;
+    d.vy = d.vy * 0.65 + (((e.clientY - d.ly) / dt) * 1000) * 0.35;
     d.lx = e.clientX;
+    d.ly = e.clientY;
     d.lt = t;
     Physics.push(d.id, d.vx);
     for (const g of d.group) Physics.push(g.id, d.vx);
     moveDragged(d);
+    Bin.track(d);
   } else if (d.mode === 'resize') {
     resizeDragged(d);
   }
@@ -4009,11 +4054,19 @@ function onPointerUp(e, cancelled = false) {
     Drag.active = null;
     if (d.mode === 'move') {
       const ids = [d.id, ...d.group.map((g) => g.id)];
+      const toBin = d.moved && !cancelled && Bin.over;
+      const fling = d.moved && !cancelled && !toBin ? flingOf(d) : null;
+      const ghosts = toBin || fling ? ids.map(ghostCard).filter(Boolean) : [];
+      Bin.reset(d);
       for (const mid of ids) refs.get(mid)?.root.classList.remove('is-dragging');
       vp.classList.remove('is-dragging-card');
       boardEl.classList.remove('show-grid');
       document.body.style.cursor = '';
-      if (d.moved) {
+      if (toBin) {
+        dropInBin(d, ids, ghosts);
+      } else if (fling) {
+        throwAway(d, ids, ghosts, fling);
+      } else if (d.moved) {
         for (const mid of ids) { const c = state.cards[mid]; if (c) c.updatedAt = now(); }
         d.tx.commit();
         for (const mid of ids) Physics.push(mid, d.vx * 1.15); // let go: the swing carries on
@@ -4137,6 +4190,7 @@ function resizeDragged(d) {
 function edgeScroll() {
   const d = Drag.active;
   if (!d || !['move', 'resize', 'lasso'].includes(d.mode) || ((d.mode === 'move' || d.mode === 'lasso') && !d.moved)) return;
+  if (d.mode === 'move' && Bin.over) return; // hovering over the bin, not reaching for the edge
   const r = vp.getBoundingClientRect();
   const edge = 44;
   let dx = 0, dy = 0;
@@ -4173,6 +4227,7 @@ function startTouchPan() {
       for (const g of d.group || []) { const c = state.cards[g.id]; if (c) { c.x = g.ox; c.y = g.oy; applyFrame(c); } }
     }
     for (const mid of [d.id, ...(d.group || []).map((g) => g.id)]) refs.get(mid)?.root.classList.remove('is-dragging', 'is-resizing');
+    if (d.mode === 'move') Bin.reset(d);
     vp.classList.remove('is-dragging-card');
     boardEl.classList.remove('show-grid');
     document.body.style.cursor = '';
@@ -4365,10 +4420,13 @@ function toggleLock(id) {
   markDirty();
   toast(card.locked ? 'Position locked. The note can still be edited.' : 'Position unlocked');
 }
-function setStatus(ids, status, label) {
+/* leave: 'fly' sends leaving cards to the Archive and trash button, 'none'
+   when the caller has already animated them (a bin drop or a throw). */
+function setStatus(ids, status, label, { leave = 'fly' } = {}) {
   endEditing();
   ids = ids.filter((id) => state.cards[id]);
   if (!ids.length) return null;
+  const flown = status !== 'active' && leave === 'fly' && flyToDrawer(ids);
   const tx = History.begin(label);
   for (const id of ids) {
     tx.touch(id);
@@ -4382,7 +4440,7 @@ function setStatus(ids, status, label) {
       if (!state.boards.some((b) => b.id === c.boardId)) c.boardId = state.activeBoardId;
       if (c.boardId === state.activeBoardId && !refs.has(id)) { mountCard(c, true); Physics.kick(id, 45); }
     } else {
-      unmountCard(id, true);
+      unmountCard(id, leave === 'fly' && !flown);
     }
   }
   const entry = tx.commit();
@@ -4390,8 +4448,8 @@ function setStatus(ids, status, label) {
   return entry;
 }
 const nounOf = (id) => CardTypes[state.cards[id]?.type]?.noun || 'card';
-function trashCards(ids) {
-  const e = setStatus(ids, 'trashed', ids.length > 1 ? `Delete ${ids.length} cards` : `Delete ${nounOf(ids[0])}`);
+function trashCards(ids, opts) {
+  const e = setStatus(ids, 'trashed', ids.length > 1 ? `Delete ${ids.length} cards` : `Delete ${nounOf(ids[0])}`, opts);
   if (e) toast(ids.length > 1 ? `${ids.length} cards moved to the trash` : 'Moved to the trash', { action: 'Undo', onAction: () => History.revert(e) });
 }
 function archiveCards(ids) {
@@ -4412,6 +4470,150 @@ function restoreCards(ids) {
   } else {
     const b = state.boards.find((x) => x.id === card.boardId);
     toast(`Restored to “${b.name}”`, { action: 'Open board', onAction: () => { $('#archiveDrawer').close(); Boards.switchTo(b.id); } });
+  }
+}
+/* ---- Binning: the drop bin, throwing a card away, and the flight to the trash ---- */
+/* Release speed (px/s) that counts as a throw, if it carries the card off the board. */
+const THROW_SPEED = 1300;
+const Bin = {
+  over: false,
+  el: () => $('#binDrop'),
+  /* While a card is carried: is the pointer over the bin? */
+  track(d) {
+    const r = this.el().getBoundingClientRect(), m = 26;
+    const over = r.width > 0 && d.cx > r.left - m && d.cx < r.right + m && d.cy > r.top - m && d.cy < r.bottom + m;
+    if (over === this.over) return;
+    this.over = over;
+    this.el().classList.toggle('is-over', over);
+    for (const id of [d.id, ...d.group.map((g) => g.id)]) refs.get(id)?.root.classList.toggle('is-binning', over);
+    if (over) navigator.vibrate?.(8);
+  },
+  reset(d) {
+    this.over = false;
+    this.el().classList.remove('is-over');
+    for (const id of [d.id, ...d.group.map((g) => g.id)]) refs.get(id)?.root.classList.remove('is-binning');
+  },
+  /* The lid shuts with a little bounce once something lands inside. */
+  gulp() {
+    const el = this.el();
+    el.classList.remove('is-gulp');
+    void el.offsetWidth;
+    el.classList.add('is-gulp');
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => el.classList.remove('is-gulp'), 650);
+  },
+};
+/* A copy of a card in a layer above everything, so it can fly anywhere on
+   screen, even off the board. The real card hides meanwhile. */
+function ghostCard(id) {
+  const ref = refs.get(id);
+  if (!ref) return null;
+  let layer = $('#flyLayer');
+  if (!layer) { layer = document.createElement('div'); layer.id = 'flyLayer'; layer.className = 'fly-layer'; document.body.append(layer); }
+  const r = ref.root.getBoundingClientRect();
+  const el = ref.root.cloneNode(true);
+  el.querySelectorAll('iframe, video, audio, canvas').forEach((n) => n.remove()); // never reload a video for a copy
+  el.classList.remove('is-selected', 'is-binning');
+  el.removeAttribute('tabindex');
+  el.setAttribute('aria-hidden', 'true');
+  Object.assign(el.style, { left: `${r.left}px`, top: `${r.top}px`, transform: 'none', zIndex: '' });
+  layer.append(el);
+  ref.root.style.visibility = 'hidden';
+  return { id, el, ref, left: r.left, top: r.top, cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: r.width, h: r.height };
+}
+/* Put carried cards back where they were picked up (the move is not kept). */
+function restoreDragOrigin(d) {
+  for (const [id, x, y] of [[d.id, d.ox, d.oy], ...d.group.map((g) => [g.id, g.ox, g.oy])]) {
+    const c = state.cards[id];
+    if (c) { c.x = x; c.y = y; applyFrame(c); }
+  }
+}
+/* Fly a ghost along an arc into a point, crumpling and shrinking as it goes. */
+function flyInto(g, x, y, { delay = 0, arc = 70, duration = 560 } = {}) {
+  if (reducedMotion.matches) return g.el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, delay, fill: 'forwards' }).finished;
+  const dx = x - g.cx, dy = y - g.cy, spin = (dx >= 0 ? 1 : -1) * (16 + Math.random() * 14);
+  g.el.querySelector('.card-paper')?.animate([{ borderRadius: '46% 38% 44% 40%', filter: 'brightness(.86)' }],
+    { duration: duration * 0.8, delay, easing: 'ease-in', fill: 'forwards' });
+  return g.el.animate([
+    { translate: '0 0', scale: '1', rotate: '0deg', opacity: 1 },
+    { translate: `${dx * 0.38}px ${dy * 0.38 - arc}px`, scale: '.7 .62', rotate: `${spin * 0.45}deg`, opacity: 1, offset: 0.42 },
+    { translate: `${dx}px ${dy}px`, scale: '.06', rotate: `${spin}deg`, opacity: 0.4 },
+  ], { duration, delay, easing: 'cubic-bezier(.45,0,.6,1)', fill: 'forwards' }).finished;
+}
+/* Cards leaving the board fly to the Archive and trash button, so you can
+   see where they went. False when that button is not on screen. */
+function flyToDrawer(ids) {
+  if (reducedMotion.matches) return false;
+  const target = [$('#btnArchive'), $('#btnMenu')].find((b) => b && b.offsetParent && b.getBoundingClientRect().width);
+  if (!target) return false;
+  const r = target.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+  const ghosts = ids.map(ghostCard).filter(Boolean);
+  if (!ghosts.length) return false;
+  Promise.all(ghosts.map((g, i) => flyInto(g, x, y, { delay: i * 45, arc: 40, duration: 620 }).finally(() => g.el.remove())))
+    .then(() => { target.classList.remove('is-gulp'); void target.offsetWidth; target.classList.add('is-gulp'); setTimeout(() => target.classList.remove('is-gulp'), 600); });
+  return true;
+}
+/* Dropped on the bin: into the trash at once. The cards leave from where
+   they were picked up, so Undo puts them back there. */
+function dropInBin(d, ids, ghosts) {
+  restoreDragOrigin(d);
+  const r = Bin.el().querySelector('.bin-can').getBoundingClientRect();
+  Bin.gulp();
+  Promise.all(ghosts.map((g, i) => flyInto(g, r.left + r.width / 2, r.top + r.height / 2, { delay: i * 40, arc: 46, duration: 440 }).finally(() => g.el.remove())))
+    .then(() => Bin.gulp());
+  navigator.vibrate?.(14);
+  trashCards(ids, { leave: 'none' });
+}
+/* Was the card thrown? Fast at release, and on a course off the board. */
+function flingOf(d) {
+  if (performance.now() - d.lt > 90) return null; // the hand stopped before letting go
+  const speed = Math.hypot(d.vx, d.vy);
+  if (speed < THROW_SPEED) return null;
+  const r = refs.get(d.id)?.root.getBoundingClientRect(), v = vp.getBoundingClientRect();
+  if (!r) return null;
+  const x = r.left + r.width / 2 + d.vx * 0.35, y = r.top + r.height / 2 + d.vy * 0.35;
+  if (x > v.left && x < v.right && y > v.top && y < v.bottom) return null;
+  return { vx: d.vx, vy: d.vy, speed };
+}
+/* Thrown off the board: the card sails off screen, then Boardu asks. Keep
+   it, and it flies back to where it was picked up, as if never thrown. */
+async function throwAway(d, ids, ghosts, fling) {
+  restoreDragOrigin(d);
+  updateBoardSize();
+  const ux = fling.vx / fling.speed, uy = fling.vy / fling.speed;
+  const dist = Math.hypot(innerWidth, innerHeight) + 200;
+  const spin = (fling.vx >= 0 ? 1 : -1) * clamp(fling.speed / 7, 140, 480);
+  const out = { translate: `${Math.round(ux * dist)}px ${Math.round(uy * dist)}px`, rotate: `${Math.round(spin)}deg` };
+  const flights = ghosts.map((g) => g.el.animate([{ translate: '0 0', rotate: '0deg' }, out],
+    { duration: reducedMotion.matches ? 1 : clamp((dist / fling.speed) * 1400, 320, 700), easing: 'cubic-bezier(.22,.6,.36,1)', fill: 'forwards' }));
+  for (const id of ids) Physics.hold(id, true);
+  navigator.vibrate?.(10);
+  const n = ids.length, noun = n > 1 ? `${n} cards` : `this ${nounOf(ids[0])}`;
+  const choice = await confirmDialog({
+    title: `Throw ${noun} in the trash?`,
+    body: `${n > 1 ? 'They stay' : 'It stays'} in Archive and trash for ${TRASH_DAYS} days, so you can bring ${n > 1 ? 'them' : 'it'} back.`,
+    confirm: 'Move to trash',
+    cancel: 'Keep it',
+  });
+  for (const id of ids) Physics.hold(id, false);
+  if (choice === 'confirm') {
+    ghosts.forEach((g) => g.el.remove());
+    const live = ids.filter((id) => state.cards[id]?.status === 'active');
+    if (live.length) trashCards(live, { leave: 'none' });
+    for (const g of ghosts) if (!live.includes(g.id)) g.ref.root.style.visibility = '';
+    return;
+  }
+  await Promise.all(ghosts.map((g, i) => {
+    const home = g.ref.root.getBoundingClientRect();
+    flights[i].cancel();
+    g.el.classList.remove('is-dragging');
+    return g.el.animate([out, { translate: `${home.left - g.left}px ${home.top - g.top}px`, rotate: '0deg' }],
+      { duration: reducedMotion.matches ? 1 : 620, delay: i * 40, easing: 'cubic-bezier(.34,1.25,.64,1)', fill: 'forwards' }).finished;
+  }));
+  for (const g of ghosts) {
+    g.el.remove();
+    g.ref.root.style.visibility = '';
+    Physics.kick(g.id, -ux * 70);
   }
 }
 function destroyCards(ids, label) {
