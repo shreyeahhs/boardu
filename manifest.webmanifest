@@ -1,0 +1,13 @@
+{
+  "name": "Boardu",
+  "short_name": "Boardu",
+  "description": "A free, private pin board. Sticky notes sway on a breezy board and everything stays in your browser.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fbe6ef",
+  "theme_color": "#fad312",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
